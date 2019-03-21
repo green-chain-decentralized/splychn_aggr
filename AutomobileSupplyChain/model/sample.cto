@@ -1,0 +1,187 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * Sample business network for automobile supply chain and assembly
+ */
+namespace org.automobilesupplychain.basic
+
+/**
+ * PARTICIPANTS
+ */
+
+concept Address {
+  o String country
+  o String city optional
+  o String street optional
+  o Integer hauseNr optional
+}
+
+abstract participant SupplyChainActor identified by id {
+  o String id
+  o String name
+  o Integer GHG
+  o Address address
+}
+
+enum SupplyerTypeEnum {
+  o TIER_1_SUPPLIER
+  o TIER_2_SUPPLIER
+  o TIER_3_SUPPLIER
+}
+
+participant Supplier extends SupplyChainActor {
+  o SupplyerTypeEnum supplyerType
+}
+
+enum CarTypeEnum {
+  o AUDI
+  o BMW
+  o VW
+}
+
+participant Manufacturer extends SupplyChainActor {
+  o CarTypeEnum carType
+  --> CarPart[] partStorage 
+  --> Car[] carStorage
+}
+
+participant Dealer extends SupplyChainActor {
+  o CarTypeEnum[] carType
+  --> Car[] carStorage
+}
+
+/**
+ * ASSETS
+ */
+
+abstract asset CARAbstratcAsset identified by id {
+  o String id
+  o Integer GHG
+  --> SupplyChainActor atStage
+}
+
+enum CarPartTypeEnum { 
+  o WHEEL
+  o ENGINE
+  o CHASSIS
+  o BODY
+  o WINDSHIELD
+}
+
+enum CarPartStatusEnum {
+  o CREATED
+  o CONSUMED
+}
+
+asset CarPart extends CARAbstratcAsset {
+  o Integer amount
+  o CarPartTypeEnum partType
+  o CarPartStatusEnum carPartStatus
+}
+
+enum ColorEnum {
+  o WHITE
+  o BLACK 
+  o BLUE
+  o YELLOW
+  o GREY
+}
+
+enum CarStatusEnum {
+  o CREATED
+  o SOLD
+}
+
+asset Car extends CARAbstratcAsset {
+  o CarTypeEnum carType
+  o CarStatusEnum carStatus
+  o ColorEnum color optional
+  o String license optional
+}
+
+/**
+ * TRANSACTIONS
+ */
+
+transaction CreateTestDataTransaction {
+}
+
+transaction DeleteAllDataTransaction {
+}
+
+transaction CreatePartTransaction {
+  o CarPartTypeEnum partType
+  -->Supplier atStage
+}
+
+transaction TransferPartTransaction {
+  --> CarPart carPart
+  --> Supplier supplier
+  --> Manufacturer manufacturer
+}
+
+transaction CreateCarTransaction {
+  --> Manufacturer manufacturer
+}
+
+transaction TransferCarTransaction {
+  --> Car car
+  --> Manufacturer manufacturer
+  --> Dealer dealer
+}
+
+transaction SellCarTransaction {
+  --> Car car
+  --> Dealer dealer
+}
+
+
+/**
+ * EVENTS
+ */
+
+event CarPartCreated {
+  --> CarPart carPart
+  --> Supplier supplier
+  o DateTime date
+}
+
+event CarPartTransferred {
+  --> CarPart carPart
+  --> Supplier from
+  --> Manufacturer to
+  o DateTime date
+}
+
+event CarCreated {
+  --> Car car
+  --> Manufacturer at
+  o DateTime date
+}
+
+event CarTransported {
+  --> Car car
+  --> Manufacturer from
+  --> Dealer to
+  o DateTime date
+}
+
+event CarSold {
+  --> Car car
+  --> Dealer dealer
+  o DateTime date
+}
+
+
